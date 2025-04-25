@@ -89,17 +89,21 @@ def sync_with_pinecone(data):
         embeds = embed_model.embed_documents(texts)
 
         metadata = [
-            {
-                'ProductName': row['product_name'],
-                'VariantName': row['variant_name'],
-                'Color': row['color_name'],
-                'Memory': row['memory_name'],
-                'Price': row['price'],
-                'Status': row['status'],
-                'Attributes': row['attributes']
-            }
-            for _, row in batch.iterrows()
+        {
+            'ProductName': row['product_name'],
+            'VariantName': row['variant_name'],
+            'Color': row['color_name'],
+            'Memory': row['memory_name'],
+            'Price': row['price'],
+            'Status': row['status'],
+            'Attributes': row['attributes'],
+            'text': texts[i]  
+        }
+            for i, row in batch.iterrows()
         ]
+
+        print(metadata)
+
 
         with tqdm(total=len(ids), desc='Upserting Vectors', unit='vector') as upsert_pbar:
             index.upsert(vectors=zip(ids, embeds, metadata))
