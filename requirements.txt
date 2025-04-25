@@ -8,3 +8,12 @@ langchain-google-genai
 ipywidgets
 langchain-pinecone
 streamlit
+streamlit
+pandas
+python-dotenv
+pyodbc
+pinecone-client
+tqdm
+langchain-google-genai
+langchain-pinecone
+google-generativeai==0.3.2
