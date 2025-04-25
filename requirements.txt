@@ -1,0 +1,10 @@
+python-dotenv
+sqlalchemy
+pyodbc
+mysql-connector-python
+pandas
+pinecone
+langchain-google-genai
+ipywidgets
+langchain-pinecone
+streamlit
