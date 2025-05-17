@@ -1,15 +1,8 @@
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
+llm = ChatGroq(model_name="llama3-70b-8192", temperature=0.0)
 
-llm = ChatGroq(
-    model_name="llama3-70b-8192",
-    temperature=0.0,
-    api_key=os.getenv("GROQ_API_KEY")
-)
 system_message = SystemMessage(
     content=(
         "Bạn là trợ lý bán hàng. Người dùng sẽ hỏi về sản phẩm và bạn sẽ cung cấp thông tin về sản phẩm dựa trên danh sách sản phẩm đã cho. "

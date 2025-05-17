@@ -64,5 +64,5 @@ if st.session_state.messages[-1]["role"] != "assistant":
     st.session_state.messages.append({"role": "assistant", "content": response})
     assistant_message = st.chat_message("assistant")
 
-    # formatted = response.replace("\n", "  \n")
-    # assistant_message.markdown(formatted)
+    formatted = response.replace("\n", "  \n")
+    assistant_message.markdown(formatted)

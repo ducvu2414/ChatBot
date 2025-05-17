@@ -70,6 +70,16 @@ DB_PASSWORD=your_sql_password
 
 ---
 
+## 🗃️ Nhập dữ liệu vào SQL Server
+
+Chạy script để nhập dữ liệu vào SQL Server:
+
+```bash
+python src/data_ingestion.py
+```
+
+---
+
 ## 🔄 Đồng bộ dữ liệu lên Pinecone
 
 ```bash
