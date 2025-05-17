@@ -1,81 +1,68 @@
+# import streamlit as st
+# from database import search_product_context
+# from ai_function import shopbot_ai
+
+# st.set_page_config(page_title="Shop Assistant Chatbot", page_icon="🛒")
+
+# st.title("🛒 Shop Assistant Chatbot")
+# query = st.text_input("❓ Ask a question about a product:")
+
+# if st.button("🔍 Get Answer"):
+#     if query.strip():
+#         context = search_product_context(query)
+
+#         response = shopbot_ai(user_query=query, context=context)
+
+#         st.markdown("### 💬 Answer:")
+#         formatted_response = response.replace("\n", "  \n") 
+#         st.markdown(formatted_response, unsafe_allow_html=True)
+
 import streamlit as st
-from pinecone import Pinecone, ServerlessSpec
-import time
-import os
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
-from langchain_google_genai import ChatGoogleGenerativeAI 
-from dotenv import load_dotenv
+from streamlit_chat import message
+import random
+from chatbot import shop_chatbot
 
-load_dotenv()
 
-pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-spec = ServerlessSpec(cloud="aws", region="us-east-1")
-index_name = 'product-catalog-index'
-myindex = pc.Index(index_name)
-time.sleep(1)
+st.set_page_config(page_title='🤖 Shop Assistant Chatbot', layout='centered', page_icon='🛒')
+st.title("🤖 Shop Assistant Chatbot Chat AI")
 
-embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-vectorstore = PineconeVectorStore(index=myindex, embedding=embed_model, text_key="text")
+# adding session state to each user session
+session_id = random.randint(0, 100000)
+# adding session_id to session state
+if "session_id" not in st.session_state:
+    st.session_state.session_id = session_id
 
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+# initial message
+INIT_MESSAGE = {"role": "assistant",
+                "content": "Hello! I am your Shop Assistant Chat Agent, I will help answer all questions you might have about Phone."}
 
-system_message = (
-    "You are a helpful and respectful shop assistant who answers product-related queries. "
-    "If a query lacks a direct answer (e.g. durability), generate a response based on related features. "
-    "Politely inform the user if the question is unrelated to the shop. "
-    "Use a conversational tone, not too formal."
-)
 
-def generate_answer_google_genai(system_message, chat_history, prompt):
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-001", 
-        temperature=0.7,
-        max_tokens=1024,
-        timeout=None,
-        max_retries=2,
-    )
+if "messages" not in st.session_state:
+        st.session_state.messages = [INIT_MESSAGE]
 
-    full_prompt = f"{system_message}\n\n" + "\n".join(chat_history + [f"User: {prompt}"]) + "\nAssistant:"
-    
-    response = llm.invoke([("system", system_message), ("human", prompt)])
-    answer = response.content 
-    
-    chat_history.append(f"User: {prompt}")
-    chat_history.append(f"Assistant: {answer}")
-    
-    return answer
+def generate_response(input_text):
+    output = shop_chatbot(user_query=input_text)
+    return output
 
-def get_relevant_passage(query, vectorstore):
-    results = vectorstore.similarity_search(query, k=1)
-    if results:
-        metadata = results[0].metadata
-        context = (
-            f"📦 Product: {metadata.get('ProductName', 'N/A')}\n"
-            f"🎨 Color: {metadata.get('Color', 'N/A')}\n"
-            f"💾 Memory: {metadata.get('Memory', 'N/A')}\n"
-            f"💸 Price: {metadata.get('Price', 'N/A')}\n"
-            f"📋 Status: {metadata.get('Status', 'N/A')}\n"
-            f"⚙️ Attributes: {metadata.get('Attributes', 'N/A')}"
-        )
-        return context
-    return "No relevant product found."
+# Display chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-def make_rag_prompt(query, context):
-    return f"Query: {query}\n\nContext:\n{context}\n\nAnswer:"
+# Get user input
+user_input = st.chat_input(placeholder="Your message ....", key="input")
 
-st.title("🛒 Shop Assistant Chatbot")
-query = st.text_input("❓ Ask a question about a product:")
+# display user input
+if user_input:
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    user_message = st.chat_message("user")
+    user_message.write(user_input)
 
-if st.button("🔍 Get Answer"):
-    if query.strip():
-        context = get_relevant_passage(query, vectorstore)
-        prompt = make_rag_prompt(query, context)
-        
-        answer = generate_answer_google_genai(system_message, st.session_state.chat_history, prompt)
+# Generate response
+if st.session_state.messages[-1]["role"] != "assistant":
+    response = generate_response(user_input)
+    st.session_state.messages.append({"role": "assistant", "content": response})
+    assistant_message = st.chat_message("assistant")
 
-        st.markdown(f"### 💬 Answer:\n{answer}")
-        with st.expander("🕘 Chat History"):
-            for chat in st.session_state.chat_history:
-                st.text(chat)
+    formatted = response.replace("\n", "  \n")
+    assistant_message.markdown(formatted)

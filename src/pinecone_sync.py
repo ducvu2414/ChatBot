@@ -16,7 +16,7 @@ pc = Pinecone(api_key=api_key)
 
 spec = ServerlessSpec(cloud="aws", region="us-east-1")
 
-index_name = 'product-catalog-index'
+index_name = 'product-catalog-1'
 existing_indexes = [index_info["name"] for index_info in pc.list_indexes()]
 
 if index_name not in existing_indexes:
@@ -78,7 +78,7 @@ def sync_with_pinecone(data):
         i_end = min(len(data), i + batch_size)
         batch = data.iloc[i:i_end]
 
-        ids = [f"{row['product_name']}_{i}" for i, row in batch.iterrows()]
+        ids = [f"{row['pvd_name']}_{i}" for i, row in batch.iterrows()]
 
         texts = [
             f"{row['pvd_name']}. Giá: {row['price']}. Màu sắc: {row['color_name']}. Bộ nhớ: {row['memory_name']}. "
