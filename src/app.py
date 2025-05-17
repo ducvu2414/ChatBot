@@ -23,8 +23,8 @@ import random
 from chatbot import shop_chatbot
 
 
-st.set_page_config(page_title='🤖 Shop Assistant Chatbot', layout='centered', page_icon='🛒')
-st.title("🤖 Shop Assistant Chatbot Chat AI")
+# st.set_page_config(page_title='🤖 Shop Assistant Chatbot', layout='centered', page_icon='🛒')
+# st.title("🤖 Shop Assistant Chatbot Chat AI")
 
 # adding session state to each user session
 session_id = random.randint(0, 100000)
