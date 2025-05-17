@@ -176,11 +176,11 @@ def search_product_context(query: str) -> str:
 
 
         lines = [
-            f"📦 Tên sản phẩm: {name}\n",
-            f"🎨 Màu: {m.get('Color', 'Không rõ')}\n",
-            f"💾 RAM: {m.get('Memory', 'Không rõ')}\n",
-            f"💸 Giá: {m.get('Price', 'Không rõ')}\n",
-            f"📋 Trạng thái: {m.get('Status', 'Không rõ')}\n",
+            f"📦 Tên sản phẩm: {name}  \n",
+            f"🎨 Màu: {m.get('Color', 'Không rõ')}  \n",
+            f"💾 RAM: {m.get('Memory', 'Không rõ')}  \n",
+            f"💸 Giá: {m.get('Price', 'Không rõ')}  \n",
+            f"📋 Trạng thái: {m.get('Status', 'Không rõ')}  \n",
             "⚙️ Thuộc tính khác:"
         ]
 
@@ -194,8 +194,8 @@ def search_product_context(query: str) -> str:
         else:
             attr_lines = []
 
-        attr_text = "\n".join(attr_lines)
-        out.append("\n".join(lines) + "\n" + attr_text + "\n---")
+        attr_text = " \n".join(attr_lines)
+        out.append("  \n".join(lines) + "  \n" + attr_text + "  \n---")
 
 
     return "\n".join(out)
