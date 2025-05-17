@@ -1,8 +1,15 @@
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
+from dotenv import load_dotenv
+import os
 
-llm = ChatGroq(model_name="llama3-70b-8192", temperature=0.0)
+load_dotenv()
 
+llm = ChatGroq(
+    model_name="llama3-70b-8192",
+    temperature=0.0,
+    api_key=os.getenv("GROQ_API_KEY")
+)
 system_message = SystemMessage(
     content=(
         "Bạn là trợ lý bán hàng. Người dùng sẽ hỏi về sản phẩm và bạn sẽ cung cấp thông tin về sản phẩm dựa trên danh sách sản phẩm đã cho. "
@@ -19,6 +26,8 @@ def shopbot_ai(user_query: str, context: str) -> str:
         f"Danh sách sản phẩm:  \n{context}  \n  \n"
 
         f"🔁 Lưu ý QUAN TRỌNG:  \n"
+        f"- Bạn phải tự động dịch các giá trị từ tiếng Anh sang tiếng Việt một cách chính xác theo ngữ cảnh và trả lời toàn bộ bằng TIẾNG VIỆT.  \n"
+        f"- Bạn chỉ được sử dụng thông tin trong danh sách sản phẩm để trả lời.  \n"
         f"- Nếu có nhiều sản phẩm cùng tên, CHỈ chọn 1 bản đại diện (loại bỏ bản khác).  \n"
         f"- **Bạn PHẢI lọc sản phẩm DỰA TRÊN TIÊU CHÍ người dùng đưa ra.**  \n"
         f"- **Không được liệt kê sản phẩm nào KHÔNG PHÙ HỢP với yêu cầu.**  \n"
