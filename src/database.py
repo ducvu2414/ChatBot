@@ -176,11 +176,11 @@ def search_product_context(query: str) -> str:
 
 
         lines = [
-            f"📦 Tên sản phẩm: {name}",
-            f"🎨 Màu: {m.get('Color', 'Không rõ')}",
-            f"💾 RAM: {m.get('Memory', 'Không rõ')}",
-            f"💸 Giá: {m.get('Price', 'Không rõ')}",
-            f"📋 Trạng thái: {m.get('Status', 'Không rõ')}",
+            f"📦 Tên sản phẩm: {name}\n",
+            f"🎨 Màu: {m.get('Color', 'Không rõ')}\n",
+            f"💾 RAM: {m.get('Memory', 'Không rõ')}\n",
+            f"💸 Giá: {m.get('Price', 'Không rõ')}\n",
+            f"📋 Trạng thái: {m.get('Status', 'Không rõ')}\n",
             "⚙️ Thuộc tính khác:"
         ]
 
