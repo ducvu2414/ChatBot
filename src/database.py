@@ -6,8 +6,9 @@ import chromadb
 import re
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
 
-# Persistent ChromaDB client
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
 embedding_model = None
