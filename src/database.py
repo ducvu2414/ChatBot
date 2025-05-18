@@ -1,3 +1,8 @@
+# ✅ Fix: dùng sqlite3 mới qua pysqlite3-binary
+import pysqlite3
+import sys
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -9,6 +14,7 @@ import json
 from dotenv import load_dotenv
 load_dotenv()
 
+# ✅ Dùng thư mục hợp lệ trên cloud
 persist_path = "/tmp/chroma_db"
 os.makedirs(persist_path, exist_ok=True)
 
@@ -22,6 +28,7 @@ def get_embedding_model():
         embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
     return embedding_model
 
+# ✅ Lazy-load vectorstore để tránh crash khi collection chưa có
 def get_vectorstore():
     if "products" not in [col.name for col in chroma_client.list_collections()]:
         raise RuntimeError("❌ Collection 'products' chưa tồn tại. Bạn cần chạy chroma_sync.py trước.")
@@ -29,13 +36,9 @@ def get_vectorstore():
         collection_name="products",
         embedding_function=get_embedding_model(),
         client=chroma_client
-)
+    )
 
-
-vectorstore = get_vectorstore()
-
-
-# GROQ LLM for extracting filters
+# ✅ Groq LLM cho phân tích bộ lọc
 llm = ChatGroq(
     model_name="llama3-70b-8192",
     temperature=0.0,
@@ -55,8 +58,6 @@ Bạn là một công cụ phân tích tiêu chí lọc sản phẩm. Dựa trê
 
 Chỉ trả về đúng định dạng JSON, không thêm bất kỳ lời giải thích, tiêu đề hoặc chú thích nào khác.
 """)
-
-
 
 def extract_filters(query: str) -> dict:
     from langchain_core.messages import HumanMessage
@@ -95,7 +96,13 @@ def extract_filters(query: str) -> dict:
 
 def search_product_context(query: str) -> str:
     filters = extract_filters(query)
-    print("Filters: ",filters)
+    print("Filters: ", filters)
+
+    try:
+        vectorstore = get_vectorstore()
+    except RuntimeError as e:
+        return str(e)
+
     results = vectorstore.similarity_search(query, k=15)
     if not results:
         return "Không tìm thấy sản phẩm nào phù hợp."
@@ -125,9 +132,7 @@ def search_product_context(query: str) -> str:
             continue
         if filters["colors"] and all(c not in color for c in filters["colors"]):
             continue
-        # if filters["memories"] and memory not in filters["memories"]:
-        #     continue
-        if filters["ram"] and ram not in filters["ram"]:
+        if filters["ram"] and ram not in [r.upper() for r in filters["ram"]]:
             continue
         if filters["status"] and status != filters["status"]:
             continue
