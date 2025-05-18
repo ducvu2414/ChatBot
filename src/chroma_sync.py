@@ -1,52 +1,69 @@
-import pandas as pd
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-import chromadb
+import traceback
+import sys
 import os
 
-csv_path = "product_data.csv"
+try:
+    import pandas as pd
+    from langchain_chroma import Chroma
+    from langchain_huggingface import HuggingFaceEmbeddings
+    import chromadb
 
-embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+    print("🚀 Bắt đầu sync dữ liệu vào ChromaDB...")
 
-persist_path = "/tmp/chroma_db"
-os.makedirs(persist_path, exist_ok=True)
+    # ✅ Đảm bảo file CSV tồn tại
+    csv_path = "product_data.csv"
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"❌ Không tìm thấy file {csv_path}")
 
-chroma_client = chromadb.PersistentClient(path=persist_path)
-vectorstore = Chroma(
-    collection_name="products",
-    embedding_function=embedding_model,
-    client=chroma_client
-)
+    # ✅ Khởi tạo embedding & vectorstore
+    print("🔧 Khởi tạo embedding và Chroma client...")
+    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
-print("✨ Loading product data...")
-df = pd.read_csv(csv_path)
+    persist_path = "/tmp/chroma_db"
+    os.makedirs(persist_path, exist_ok=True)
 
-print("📊 Embedding and indexing...")
-documents, metadatas = [], []
-for _, row in df.iterrows():
-    name = row['product_variant_name']
-    color = row['color_name']
-    memory = row['memory_name']
-    price = row.get('price', 'Không rõ')
-    status = row['product_variant_status']
-    attributes = row['attributes']
+    chroma_client = chromadb.PersistentClient(path=persist_path)
+    vectorstore = Chroma(
+        collection_name="products",
+        embedding_function=embedding_model,
+        client=chroma_client
+    )
 
-    text = f"{name}. Màu: {color}. RAM: {memory}. Giá: {price}. Trạng thái: {status}. Thuộc tính: {attributes}"
-    documents.append(text)
-    metadatas.append({
-        "ProductName": name,
-        "Color": color,
-        "Memory": memory,
-        "Price": price,
-        "Status": status,
-        "Attributes": attributes,
-        "text": text
-    })
+    # ✅ Đọc dữ liệu
+    print("✨ Đang đọc file CSV...")
+    df = pd.read_csv(csv_path)
 
-vectorstore.add_texts(texts=documents, metadatas=metadatas)
+    print("📊 Đang tạo embedding và metadata...")
+    documents, metadatas = [], []
+    for _, row in df.iterrows():
+        name = row['product_variant_name']
+        color = row['color_name']
+        memory = row['memory_name']
+        price = row.get('price', 'Không rõ')
+        status = row['product_variant_status']
+        attributes = row['attributes']
 
+        text = f"{name}. Màu: {color}. RAM: {memory}. Giá: {price}. Trạng thái: {status}. Thuộc tính: {attributes}"
+        documents.append(text)
+        metadatas.append({
+            "ProductName": name,
+            "Color": color,
+            "Memory": memory,
+            "Price": price,
+            "Status": status,
+            "Attributes": attributes,
+            "text": text
+        })
 
-print("✅ Done syncing to ChromaDB!")
+    print("💾 Đang thêm vào vectorstore...")
+    vectorstore.add_texts(texts=documents, metadatas=metadatas)
+
+    print("✅ Đã sync xong vào ChromaDB!")
+
+except Exception:
+    print("❌ Lỗi trong chroma_sync.py:")
+    traceback.print_exc()
+    sys.exit(1)
 
 # import pandas as pd
 # from langchain_chroma import Chroma
