@@ -2,12 +2,16 @@ import pandas as pd
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import chromadb
+import os
 
 csv_path = "product_data.csv"
 
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
+persist_path = "/tmp/chroma_db"
+os.makedirs(persist_path, exist_ok=True)
+
+chroma_client = chromadb.PersistentClient(path=persist_path)
 vectorstore = Chroma(
     collection_name="products",
     embedding_function=embedding_model,

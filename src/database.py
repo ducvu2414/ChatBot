@@ -9,7 +9,10 @@ import json
 from dotenv import load_dotenv
 load_dotenv()
 
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
+persist_path = "/tmp/chroma_db"
+os.makedirs(persist_path, exist_ok=True)
+
+chroma_client = chromadb.PersistentClient(path=persist_path)
 
 embedding_model = None
 

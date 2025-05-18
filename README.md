@@ -70,10 +70,10 @@ DB_PASSWORD=your_sql_password
 
 ---
 
-## 🔄 Đồng bộ dữ liệu lên Pinecone
+## 🔄 Đồng bộ dữ liệu lên chroma
 
 ```bash
-python src/pinecone_sync.py
+python src/chroma_sync.py
 ```
 
 ---
