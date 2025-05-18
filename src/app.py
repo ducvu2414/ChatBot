@@ -21,7 +21,7 @@ if "products" not in collections:
     with st.spinner("🔄 Initializing product database... (one-time setup)"):
         try:
             # Gọi file sync
-            subprocess.run(["python", "src/chroma_sync.py"], check=True)
+            subprocess.run(["python", "chroma_sync.py"], check=True)
 
             # Kiểm tra lại sau khi sync
             collections = [col.name for col in client.list_collections()]
