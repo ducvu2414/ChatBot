@@ -22,11 +22,18 @@ def get_embedding_model():
         embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
     return embedding_model
 
-vectorstore = Chroma(
-    collection_name="products",
-    embedding_function=get_embedding_model(),
-    client=chroma_client
+def get_vectorstore():
+    if "products" not in [col.name for col in chroma_client.list_collections()]:
+        raise RuntimeError("❌ Collection 'products' chưa tồn tại. Bạn cần chạy chroma_sync.py trước.")
+    return Chroma(
+        collection_name="products",
+        embedding_function=get_embedding_model(),
+        client=chroma_client
 )
+
+
+vectorstore = get_vectorstore()
+
 
 # GROQ LLM for extracting filters
 llm = ChatGroq(
