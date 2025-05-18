@@ -1,3 +1,10 @@
+import sys
+import importlib
+
+import pysqlite3
+sys.modules["sqlite3"] = pysqlite3
+importlib.reload(pysqlite3)
+
 import os
 import sys
 import random

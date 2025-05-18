@@ -1,7 +1,11 @@
 # ✅ Fix: dùng sqlite3 mới qua pysqlite3-binary
-import pysqlite3
 import sys
-sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+import importlib
+
+import pysqlite3
+sys.modules["sqlite3"] = pysqlite3
+importlib.reload(pysqlite3)
+
 import pandas as pd
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
