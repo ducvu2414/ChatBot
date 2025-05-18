@@ -196,7 +196,7 @@ def search_product_context(query: str) -> str:
 
         attr_text = "  \n".join(attr_lines)
         out.append("  \n".join(lines) + "  \n" + attr_text + "  \n---")
-
+        print(out)
 
     return "\n\n".join(out)
 
