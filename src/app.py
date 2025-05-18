@@ -9,6 +9,9 @@ from streamlit_chat import message
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import chromadb
+from chatbot import shop_chatbot
+
+
 
 # ✅ Cấu hình giao diện Streamlit
 st.set_page_config(page_title='🤖 Shop Assistant Chatbot', layout='centered', page_icon='🛒')
@@ -92,9 +95,9 @@ INIT_MESSAGE = {
 if "messages" not in st.session_state:
     st.session_state.messages = [INIT_MESSAGE]
 
-# ✅ Dummy chatbot logic (Bạn có thể thay bằng import thật)
-def shop_chatbot(user_query: str) -> str:
-    return f"Tôi nhận được câu hỏi: '{user_query}'. (Logic thực nằm trong `shop_chatbot`)"
+# ✅ Hàm gọi chatbot logic
+def generate_response(input_text):
+    return shop_chatbot(user_query=input_text)
 
 # ✅ Hiển thị tin nhắn
 for msg in st.session_state.messages:
