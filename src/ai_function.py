@@ -14,6 +14,10 @@ system_message = SystemMessage(
 )
 
 def shopbot_ai(user_query: str, context: str) -> str:
+    print(context)
+    if not context.strip():
+        return "❌ Hiện tại, không có sản phẩm nào phù hợp với yêu cầu của bạn."
+    
     full_prompt = (
         f"Câu hỏi của người dùng: {user_query}  \n  \n"
         f"Danh sách sản phẩm:  \n{context}  \n  \n"
