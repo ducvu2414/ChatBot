@@ -14,7 +14,7 @@ system_message = SystemMessage(
 )
 
 def shopbot_ai(user_query: str, context: str) -> str:
-    
+    print(context)
     full_prompt = (
         f"Câu hỏi của người dùng: {user_query}  \n  \n"
         f"Danh sách sản phẩm:  \n{context}  \n  \n"
