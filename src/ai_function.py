@@ -25,7 +25,8 @@ def shopbot_ai(user_query: str, context: str) -> str:
         f"- Nếu có nhiều sản phẩm cùng tên, CHỈ chọn 1 bản đại diện (loại bỏ bản khác).  \n"
         f"- **Bạn PHẢI lọc sản phẩm DỰA TRÊN TIÊU CHÍ người dùng đưa ra.**  \n"
         f"- **Không được liệt kê sản phẩm nào KHÔNG PHÙ HỢP với yêu cầu.**  \n"
-        f"- **Đặc biệt, nếu người dùng hỏi về khoảng giá, màu sắc, cấu hình,... thì chỉ chọn sản phẩm thỏa mãn tất cả tiêu chí.**  \n"
+        f"- ❌ Nếu KHÔNG có bất kỳ sản phẩm nào thỏa mãn TẤT CẢ tiêu chí người dùng đưa ra, bạn PHẢI trả lời đúng dòng sau: 'Hiện không có sản phẩm nào phù hợp với yêu cầu của bạn.' và KHÔNG TRẢ LỜI GÌ THÊM.  \n"
+        f"- ✅ Nếu có sản phẩm phù hợp, chỉ liệt kê duy nhất các sản phẩm thỏa mãn đầy đủ tiêu chí. KHÔNG được liệt kê sản phẩm gần giống hoặc thiếu tiêu chí.  \n"
 
         f"❗ Vui lòng TRẢ LỜI BẰNG TIẾNG VIỆT, GIỮ ĐÚNG FORMAT SAU cho mỗi sản phẩm:  \n"
         f"📦 Tên sản phẩm: ...  \n"
