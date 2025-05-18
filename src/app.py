@@ -4,18 +4,31 @@ import streamlit as st
 from streamlit_chat import message
 import random
 from chatbot import shop_chatbot
+import chromadb
 
 # ✅ Streamlit UI setup
 st.set_page_config(page_title='🤖 Shop Assistant Chatbot', layout='centered', page_icon='🛒')
 st.title("🛒 Shop Assistant Chatbot")
 
-# ✅ Tạo Chroma DB nếu chưa tồn tại (dành cho deploy cloud)
-CHROMA_DB_PATH = "/tmp/chroma_db"  # Luôn ghi được trên Streamlit Cloud
+# ✅ Khởi tạo Chroma client
+CHROMA_DB_PATH = "/tmp/chroma_db"
+os.makedirs(CHROMA_DB_PATH, exist_ok=True)
+client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
 
-if not os.path.exists(os.path.join(CHROMA_DB_PATH, "chroma.sqlite3")):
+# ✅ Kiểm tra collection 'products' đã tồn tại chưa
+collections = [col.name for col in client.list_collections()]
+if "products" not in collections:
     with st.spinner("🔄 Initializing product database... (one-time setup)"):
         try:
+            # Gọi file sync
             subprocess.run(["python", "src/chroma_sync.py"], check=True)
+
+            # Kiểm tra lại sau khi sync
+            collections = [col.name for col in client.list_collections()]
+            if "products" not in collections:
+                st.error("❌ chroma_sync.py đã chạy nhưng không tạo được collection 'products'.")
+                st.stop()
+
             st.success("✅ Product database initialized.")
         except Exception as e:
             st.error(f"❌ Failed to initialize database: {e}")
@@ -31,7 +44,6 @@ INIT_MESSAGE = {
     "role": "assistant",
     "content": "Hello! I am your Shop Assistant. Ask me anything about our phones 📱!"
 }
-
 if "messages" not in st.session_state:
     st.session_state.messages = [INIT_MESSAGE]
 
@@ -48,12 +60,10 @@ for msg in st.session_state.messages:
 user_input = st.chat_input(placeholder="Ask me about a phone...")
 
 if user_input:
-    # Thêm tin nhắn người dùng vào session
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # Gọi LLM để sinh phản hồi
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = generate_response(user_input)
