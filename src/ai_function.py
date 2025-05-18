@@ -9,14 +9,11 @@ system_message = SystemMessage(
         "Hãy đọc danh sách sản phẩm bên dưới và tìm những sản phẩm phù hợp với tiêu chí của họ. "
         "❗ Tất cả câu trả lời phải bằng TIẾNG VIỆT, bao gồm các giá trị như màu sắc, trạng thái, thuộc tính kỹ thuật. "
         "Tự động dịch các giá trị từ tiếng Anh sang tiếng Việt một cách chính xác theo ngữ cảnh. "
-        "Chỉ sử dụng thông tin trong danh sách sản phẩm, không bịa đặt, không suy đoán thêm."
+        "Bắt buộc chỉ sử dụng thông tin trong danh sách sản phẩm, không bịa đặt, không suy đoán thêm."
     )
 )
 
 def shopbot_ai(user_query: str, context: str) -> str:
-    print(context)
-    if not context.strip():
-        return "❌ Hiện tại, không có sản phẩm nào phù hợp với yêu cầu của bạn."
     
     full_prompt = (
         f"Câu hỏi của người dùng: {user_query}  \n  \n"
