@@ -1,12 +1,16 @@
 import os
+import sys
+import random
+import traceback
 import subprocess
+import pandas as pd
 import streamlit as st
 from streamlit_chat import message
-import random
-from chatbot import shop_chatbot
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 import chromadb
 
-# ✅ Streamlit UI setup
+# ✅ Cấu hình giao diện Streamlit
 st.set_page_config(page_title='🤖 Shop Assistant Chatbot', layout='centered', page_icon='🛒')
 st.title("🛒 Shop Assistant Chatbot")
 
@@ -15,32 +19,72 @@ CHROMA_DB_PATH = "/tmp/chroma_db"
 os.makedirs(CHROMA_DB_PATH, exist_ok=True)
 client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
 
-# ✅ Kiểm tra collection 'products' đã tồn tại chưa
+# ✅ Hàm sync dữ liệu từ CSV vào ChromaDB
+def sync_chroma_data():
+    try:
+        st.info("🚀 Bắt đầu sync dữ liệu vào ChromaDB...")
+
+        csv_path = "product_data.csv"
+        if not os.path.exists(csv_path):
+            st.error(f"❌ Không tìm thấy file {csv_path}")
+            st.stop()
+
+        st.write("🔧 Khởi tạo embedding và Chroma client...")
+        embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+
+        vectorstore = Chroma(
+            collection_name="products",
+            embedding_function=embedding_model,
+            client=client
+        )
+
+        st.write("✨ Đang đọc file CSV...")
+        df = pd.read_csv(csv_path)
+
+        st.write("📊 Đang tạo embedding và metadata...")
+        documents, metadatas = [], []
+        for _, row in df.iterrows():
+            name = row['product_variant_name']
+            color = row['color_name']
+            memory = row['memory_name']
+            price = row.get('price', 'Không rõ')
+            status = row['product_variant_status']
+            attributes = row['attributes']
+
+            text = f"{name}. Màu: {color}. RAM: {memory}. Giá: {price}. Trạng thái: {status}. Thuộc tính: {attributes}"
+            documents.append(text)
+            metadatas.append({
+                "ProductName": name,
+                "Color": color,
+                "Memory": memory,
+                "Price": price,
+                "Status": status,
+                "Attributes": attributes,
+                "text": text
+            })
+
+        st.write("💾 Đang thêm vào vectorstore...")
+        vectorstore.add_texts(texts=documents, metadatas=metadatas)
+
+        st.success("✅ Đã sync xong vào ChromaDB!")
+
+    except Exception:
+        st.error("❌ Lỗi khi sync dữ liệu vào ChromaDB:")
+        st.text(traceback.format_exc())
+        st.stop()
+
+# ✅ Kiểm tra nếu collection chưa tồn tại
 collections = [col.name for col in client.list_collections()]
 if "products" not in collections:
     with st.spinner("🔄 Initializing product database... (one-time setup)"):
-        try:
-            # Gọi file sync
-            chroma_sync_path = os.path.join(os.path.dirname(__file__), "chroma_sync.py")
-            subprocess.run(["python", chroma_sync_path], check=True)
+        sync_chroma_data()
 
-            # Kiểm tra lại sau khi sync
-            collections = [col.name for col in client.list_collections()]
-            if "products" not in collections:
-                st.error("❌ chroma_sync.py đã chạy nhưng không tạo được collection 'products'.")
-                st.stop()
-
-            st.success("✅ Product database initialized.")
-        except Exception as e:
-            st.error(f"❌ Failed to initialize database: {e}")
-            st.stop()
-
-# ✅ Quản lý session_id (mỗi người dùng khác nhau)
+# ✅ Quản lý session
 session_id = random.randint(0, 100000)
 if "session_id" not in st.session_state:
     st.session_state.session_id = session_id
 
-# ✅ Khởi tạo tin nhắn đầu tiên
+# ✅ Tin nhắn khởi tạo
 INIT_MESSAGE = {
     "role": "assistant",
     "content": "Hello! I am your Shop Assistant. Ask me anything about our phones 📱!"
@@ -48,18 +92,17 @@ INIT_MESSAGE = {
 if "messages" not in st.session_state:
     st.session_state.messages = [INIT_MESSAGE]
 
-# ✅ Hàm gọi chatbot logic
-def generate_response(input_text):
-    return shop_chatbot(user_query=input_text)
+# ✅ Dummy chatbot logic (Bạn có thể thay bằng import thật)
+def shop_chatbot(user_query: str) -> str:
+    return f"Tôi nhận được câu hỏi: '{user_query}'. (Logic thực nằm trong `shop_chatbot`)"
 
-# ✅ Hiển thị lịch sử chat
+# ✅ Hiển thị tin nhắn
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"].replace("\n", "  \n"), unsafe_allow_html=True)
 
-# ✅ Nhận tin nhắn người dùng
+# ✅ Nhận input người dùng
 user_input = st.chat_input(placeholder="Ask me about a phone...")
-
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
@@ -67,6 +110,6 @@ if user_input:
 
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            response = generate_response(user_input)
+            response = shop_chatbot(user_input)
             st.session_state.messages.append({"role": "assistant", "content": response})
             st.markdown(response.replace("\n", "  \n"))
