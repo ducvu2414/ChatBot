@@ -45,9 +45,11 @@ def generate_response(input_text):
     return output
 
 # Display chat messages
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        formatted = msg["content"].replace("\n", "  \n")
+        st.markdown(formatted, unsafe_allow_html=True)
+
 
 # Get user input
 user_input = st.chat_input(placeholder="Your message ....", key="input")
@@ -61,8 +63,10 @@ if user_input:
 # Generate response
 if st.session_state.messages[-1]["role"] != "assistant":
     response = generate_response(user_input)
-    st.session_state.messages.append({"role": "assistant", "content": response})
-    assistant_message = st.chat_message("assistant")
 
-    formatted = response.replace("\n", "\n")
-    assistant_message.markdown(formatted)
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
+    assistant_message = st.chat_message("assistant")
+    formatted_response = response.replace("\n", "  \n")
+    assistant_message.markdown(formatted_response, unsafe_allow_html=True)
+

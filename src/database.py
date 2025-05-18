@@ -194,9 +194,10 @@ def search_product_context(query: str) -> str:
         else:
             attr_lines = []
 
-        attr_text = " \n".join(attr_lines)
+        attr_text = "  \n".join(attr_lines)
         out.append("  \n".join(lines) + "  \n" + attr_text + "  \n---")
 
 
-    return "\n".join(out)
+    return "\n\n".join(out)
+
 
