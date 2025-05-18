@@ -1,4 +1,4 @@
-from langchain.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_groq import ChatGroq
@@ -33,15 +33,20 @@ llm = ChatGroq(
 )
 
 filter_system = SystemMessage(content="""
-Bạn là công cụ phân tích tiêu chí lọc sản phẩm. Dựa vào câu hỏi bằng tiếng Việt, hãy trả về JSON chứa các trường sau:
-- price_min (số hoặc null)
-- price_max (số hoặc null)
-- colors (mảng tiếng Anh: ví dụ ["black", "white"])
-- memories (mảng như ["4GB", "8GB"])
-- status ("AVAILABLE" hoặc null)
-- attributes (mảng từ khóa như ["5G", "AMOLED"])
-Chỉ trả về JSON, không thêm lời giải thích.
+Bạn là một công cụ phân tích tiêu chí lọc sản phẩm. Dựa trên câu hỏi đầu vào bằng tiếng Việt từ người dùng, hãy trích xuất và trả về kết quả dưới dạng JSON với các trường sau:
+
+- "price_min": số nguyên thể hiện giá thấp nhất, hoặc null nếu không đề cập.
+- "price_max": số nguyên thể hiện giá cao nhất, hoặc null nếu không đề cập.
+- "colors": mảng các màu (bằng tiếng Anh, ví dụ: ["black", "white"]), hoặc mảng rỗng nếu không đề cập.
+- "memories": mảng các tùy chọn bộ nhớ trong (ví dụ: ["64GB", "128GB"]), hoặc mảng rỗng nếu không đề cập. Nếu người dùng chỉ nhắc đến dung lượng như "128GB", "256GB" mà không ghi rõ là ROM hoặc bộ nhớ trong, vẫn hiểu là "memories".
+- "ram": mảng các tùy chọn RAM (ví dụ: ["4GB", "8GB"]), hoặc mảng rỗng nếu không đề cập. Nếu người dùng chỉ nhắc đến giá trị như "4GB", "8GB" mà không ghi rõ là RAM, vẫn hiểu là "ram".
+- "status": "AVAILABLE" nếu người dùng yêu cầu sản phẩm còn hàng, hoặc null nếu không rõ. Nếu người dùng chỉ nhắc đến tình trạng sản phẩm (ví dụ: "còn hàng", "có sẵn") mà không ghi rõ trường, vẫn hiểu là "status".
+- "attributes": mảng các từ khóa đặc điểm nổi bật của sản phẩm (ví dụ: ["5G", "AMOLED", "Snapdragon", "eSIM"]), hoặc mảng rỗng nếu không đề cập. Nếu người dùng nhắc đến các đặc điểm nổi bật mà không chỉ rõ đó là thuộc tính, vẫn hiểu là "attributes".
+
+Chỉ trả về đúng định dạng JSON, không thêm bất kỳ lời giải thích, tiêu đề hoặc chú thích nào khác.
 """)
+
+
 
 def extract_filters(query: str) -> dict:
     from langchain_core.messages import HumanMessage
@@ -52,23 +57,35 @@ def extract_filters(query: str) -> dict:
         "price_max": None,
         "colors": [],
         "memories": [],
+        "ram": [],
         "status": None,
         "attributes": []
     }
 
     try:
         content = resp.content.strip()
-        if not content.startswith("{"):
-            content = content[content.find("{"):]
-        content = content.replace("\n", "")
-        result = json.loads(content)
+        print("🧠 Raw LLM output:", content)
+
+        content = re.sub(r'\](\s*])', ']', content)
+        content = re.sub(r',\s*}', '}', content)
+        content = re.sub(r',\s*\]', ']', content)
+
+        match = re.search(r'\{.*\}', content, re.DOTALL)
+        if not match:
+            print("❌ Không tìm thấy đoạn JSON hợp lệ.")
+            return default
+
+        json_str = match.group(0)
+        result = json.loads(json_str)
         return {**default, **result}
+
     except Exception as e:
         print("❌ JSON parse error:", e)
         return default
 
 def search_product_context(query: str) -> str:
     filters = extract_filters(query)
+    print("Filters: ",filters)
     results = vectorstore.similarity_search(query, k=15)
     if not results:
         return "Không tìm thấy sản phẩm nào phù hợp."
@@ -88,7 +105,7 @@ def search_product_context(query: str) -> str:
             price = 0
 
         color = m.get("Color", "").lower()
-        memory = m.get("Memory", "")
+        ram = m.get("Memory", "").upper()
         status = m.get("Status", "").upper()
         attrs = m.get("Attributes", "").lower()
 
@@ -98,7 +115,9 @@ def search_product_context(query: str) -> str:
             continue
         if filters["colors"] and all(c not in color for c in filters["colors"]):
             continue
-        if filters["memories"] and memory not in filters["memories"]:
+        # if filters["memories"] and memory not in filters["memories"]:
+        #     continue
+        if filters["ram"] and ram not in filters["ram"]:
             continue
         if filters["status"] and status != filters["status"]:
             continue
@@ -127,4 +146,4 @@ def search_product_context(query: str) -> str:
     if not all_products:
         return "Không tìm thấy sản phẩm nào thỏa mãn tất cả tiêu chí của bạn."
 
-    return "\n".join(all_products)
+    return "\n\n".join(all_products)
